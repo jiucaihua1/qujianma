@@ -70,13 +70,21 @@ class PickupDatabaseHelper(context: Context) :
         }
     }
 
-    fun insertUnique(candidates: List<NativeParsedPickup>): InsertResult {
+    fun insertUnique(
+        candidates: List<NativeParsedPickup>,
+        dedupHistoryDays: Int = 0,
+    ): InsertResult {
         val db = writableDatabase
         ensureSchema(db)
 
         val inserted = mutableListOf<NativeParsedPickup>()
         var skipped = 0
         val now = System.currentTimeMillis()
+        val historyCutoff = if (dedupHistoryDays > 0) {
+            now - dedupHistoryDays.toLong() * 24L * 60L * 60L * 1000L
+        } else {
+            0L
+        }
 
         db.beginTransaction()
         try {
@@ -84,10 +92,17 @@ class PickupDatabaseHelper(context: Context) :
                 val code = candidate.code.trim().uppercase()
                 if (code.isEmpty()) continue
 
-                val exists = db.rawQuery(
-                    "SELECT 1 FROM $TABLE_NAME WHERE is_picked_up = 0 AND UPPER(code) = ? LIMIT 1",
-                    arrayOf(code)
-                ).use { cursor -> cursor.moveToFirst() }
+                val exists = if (dedupHistoryDays > 0) {
+                    db.rawQuery(
+                        "SELECT 1 FROM $TABLE_NAME WHERE UPPER(code) = ? AND (is_picked_up = 0 OR created_at >= ?) LIMIT 1",
+                        arrayOf(code, historyCutoff.toString())
+                    ).use { cursor -> cursor.moveToFirst() }
+                } else {
+                    db.rawQuery(
+                        "SELECT 1 FROM $TABLE_NAME WHERE is_picked_up = 0 AND UPPER(code) = ? LIMIT 1",
+                        arrayOf(code)
+                    ).use { cursor -> cursor.moveToFirst() }
+                }
 
                 if (exists) {
                     skipped++

@@ -195,6 +195,36 @@ class QuickTileService {
     }
   }
 
+  static Future<bool> shareText({
+    required String text,
+    String subject = '待取快递清单',
+  }) async {
+    try {
+      return (await _channel.invokeMethod<bool>(
+            'shareText',
+            {'text': text, 'subject': subject},
+          )) ==
+          true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> shareImage({
+    required Uint8List bytes,
+    String title = '待取快递清单',
+  }) async {
+    try {
+      return (await _channel.invokeMethod<bool>(
+            'shareImage',
+            {'bytes': bytes, 'title': title},
+          )) ==
+          true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<bool> checkSmsPermission() async {
     try {
       return (await _channel.invokeMethod<bool>('checkSmsPermission')) == true;

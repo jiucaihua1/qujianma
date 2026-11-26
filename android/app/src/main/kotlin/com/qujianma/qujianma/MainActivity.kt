@@ -12,10 +12,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import rikka.shizuku.Shizuku
+import java.io.File
 import java.lang.ref.WeakReference
 
 class MainActivity : FlutterActivity() {
@@ -114,6 +116,56 @@ class MainActivity : FlutterActivity() {
                     val minute = call.argument<Int>("minute") ?: 30
                     DailyReminderScheduler.scheduleNext(applicationContext, enabled, hour, minute)
                     result.success(true)
+                }
+
+                "shareText" -> {
+                    val text = call.argument<String>("text") ?: ""
+                    val subject = call.argument<String>("subject") ?: "待取快递清单"
+                    if (text.isBlank()) {
+                        result.success(false)
+                    } else {
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, subject)
+                            putExtra(Intent.EXTRA_TEXT, text)
+                        }
+                        val chooser = Intent.createChooser(sendIntent, subject).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(chooser)
+                        result.success(true)
+                    }
+                }
+
+                "shareImage" -> {
+                    val bytes = call.argument<ByteArray>("bytes")
+                    val title = call.argument<String>("title") ?: "待取快递清单"
+                    if (bytes == null || bytes.isEmpty()) {
+                        result.success(false)
+                    } else {
+                        try {
+                            val dir = File(cacheDir, "shared").apply { mkdirs() }
+                            val file = File(dir, "pickup_list_${System.currentTimeMillis()}.png")
+                            file.writeBytes(bytes)
+                            val uri = FileProvider.getUriForFile(
+                                this,
+                                "$packageName.fileprovider",
+                                file
+                            )
+                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "image/png"
+                                putExtra(Intent.EXTRA_STREAM, uri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            val chooser = Intent.createChooser(sendIntent, title).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(chooser)
+                            result.success(true)
+                        } catch (_: Throwable) {
+                            result.success(false)
+                        }
+                    }
                 }
 
                 "getQuickTileStatus" -> {

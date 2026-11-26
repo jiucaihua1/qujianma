@@ -7,6 +7,7 @@ import '../services/app_state.dart';
 import '../services/ocr_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/add_pickup_sheets.dart';
+import '../widgets/share_pickup_sheet.dart';
 import 'station_manage_page.dart';
 
 class PickupListPage extends StatelessWidget {
@@ -112,38 +113,16 @@ class PickupListPage extends StatelessWidget {
                     ),
                     const Spacer(),
                     IconButton.filledTonal(
-                      tooltip: '倒查系统短信',
-                      onPressed: () =>
-                          showSmsBackfillSheet(context, appState: appState),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF0D9488),
-                      ),
-                      icon: const Icon(Icons.sms_rounded, size: 20),
-                    ),
-                    const SizedBox(width: 6),
-                    IconButton.filledTonal(
-                      tooltip: '跳转 App 自动收码',
-                      onPressed: () => showGuidedScanTargetSheet(context),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF7C3AED),
-                      ),
-                      icon: const Icon(Icons.open_in_new_rounded, size: 20),
-                    ),
-                    const SizedBox(width: 6),
-                    IconButton.filledTonal(
-                      tooltip: '截图识别',
-                      onPressed: () => runOcrImportFlow(
+                      tooltip: '分享待取清单',
+                      onPressed: () => showSharePickupSheet(
                         context,
                         appState: appState,
-                        ocrService: ocrService,
                       ),
                       style: IconButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: AppTheme.primary,
                       ),
-                      icon: const Icon(Icons.photo_camera_back_rounded, size: 20),
+                      icon: const Icon(Icons.share_rounded, size: 20),
                     ),
                   ],
                 ),

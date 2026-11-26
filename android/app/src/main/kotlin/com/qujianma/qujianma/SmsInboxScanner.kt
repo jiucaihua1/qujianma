@@ -60,7 +60,7 @@ object SmsInboxScanner {
 
         val dbHelper = PickupDatabaseHelper(context.applicationContext)
         val insertRes = try {
-            dbHelper.insertUnique(collected.values.toList())
+            dbHelper.insertUnique(collected.values.toList(), dedupHistoryDays = days)
         } finally {
             dbHelper.close()
         }
