@@ -98,6 +98,16 @@ class MainActivity : FlutterActivity() {
 
         methodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "getAppVersion" -> {
+                    val version = try {
+                        @Suppress("DEPRECATION")
+                        packageManager.getPackageInfo(packageName, 0).versionName ?: "0.1.0"
+                    } catch (_: Throwable) {
+                        "0.1.0"
+                    }
+                    result.success(version)
+                }
+
                 "getQuickTileStatus" -> {
                     result.success(
                         mapOf(

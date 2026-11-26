@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:qujianma/models/parser_rule_bundle.dart';
 import 'package:qujianma/models/pickup_item.dart';
 import 'package:qujianma/models/station_rule.dart';
+import 'package:qujianma/services/app_update_service.dart';
 import 'package:qujianma/services/pickup_parser.dart';
 
 void main() {
@@ -144,6 +145,14 @@ A1-26-9 取件码
       } finally {
         PickupParser.setDynamicBundle(ParserRuleBundle.defaults());
       }
+    });
+
+    test('AppUpdateService.isNewerVersion compares semver tags accurately', () {
+      expect(AppUpdateService.isNewerVersion('v0.1.1', '0.1.0'), isTrue);
+      expect(AppUpdateService.isNewerVersion('v0.2.0', '0.1.9'), isTrue);
+      expect(AppUpdateService.isNewerVersion('v1.0.0', '0.9.9'), isTrue);
+      expect(AppUpdateService.isNewerVersion('v0.1.0', '0.1.0'), isFalse);
+      expect(AppUpdateService.isNewerVersion('0.1.0', '0.1.1'), isFalse);
     });
   });
 }

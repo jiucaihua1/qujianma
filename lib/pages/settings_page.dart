@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/identity_shortcut.dart';
 import '../services/app_state.dart';
+import '../services/app_update_service.dart';
 import '../services/quick_tile_service.dart';
 import '../theme/app_theme.dart';
 import 'station_manage_page.dart';
@@ -293,6 +295,8 @@ class SettingsPage extends StatelessWidget {
                 ),
               ),
               const Divider(height: 1, color: AppTheme.cardBorder),
+              const _CheckUpdateTile(),
+              const Divider(height: 1, color: AppTheme.cardBorder),
               const Padding(
                 padding: EdgeInsets.all(16),
                 child: Column(
@@ -339,6 +343,135 @@ class SettingsPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CheckUpdateTile extends StatefulWidget {
+  const _CheckUpdateTile();
+
+  @override
+  State<_CheckUpdateTile> createState() => _CheckUpdateTileState();
+}
+
+class _CheckUpdateTileState extends State<_CheckUpdateTile> {
+  String _currentVersion = '0.1.0';
+  bool _checking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    QuickTileService.getAppVersion().then((v) {
+      if (mounted) {
+        setState(() => _currentVersion = v);
+      }
+    });
+  }
+
+  Future<void> _checkUpdate() async {
+    if (_checking) return;
+    setState(() => _checking = true);
+    try {
+      final info = await const AppUpdateService().checkForUpdate(
+        currentVersion: _currentVersion,
+      );
+      if (!mounted) return;
+      if (!info.hasUpdate) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('当前已是最新版本（v$_currentVersion）')),
+        );
+        return;
+      }
+
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('发现新版本 ${info.latestVersion}'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '当前版本：v${info.currentVersion}',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  info.releaseNotes.isEmpty
+                      ? '包含功能优化与问题修复，建议更新体验。'
+                      : info.releaseNotes,
+                  style: const TextStyle(fontSize: 13.5, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('暂不更新'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final uri = Uri.tryParse(info.downloadUrl);
+                if (uri != null) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+              child: const Text('去下载更新'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('检查更新失败：$e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _checking = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppTheme.primarySoft,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(
+          Icons.system_update_rounded,
+          color: AppTheme.primary,
+          size: 20,
+        ),
+      ),
+      title: const Text(
+        '检查应用更新',
+        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        '当前版本 v$_currentVersion · 从 GitHub Releases 获取最新版',
+        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+      ),
+      trailing: _checking
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.chevron_right_rounded),
+      onTap: _checkUpdate,
     );
   }
 }

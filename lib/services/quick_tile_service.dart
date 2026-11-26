@@ -166,6 +166,16 @@ class QuickTileService {
     }
   }
 
+  static Future<String> getAppVersion() async {
+    try {
+      final version = await _channel.invokeMethod<String>('getAppVersion');
+      if (version != null && version.trim().isNotEmpty) {
+        return version.trim();
+      }
+    } catch (_) {}
+    return '0.1.0';
+  }
+
   static Future<bool> checkSmsPermission() async {
     try {
       return (await _channel.invokeMethod<bool>('checkSmsPermission')) == true;
