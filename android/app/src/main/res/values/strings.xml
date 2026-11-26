@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tile_label">识取件码</string>
+    <string name="accessibility_service_label">取件码一键截屏识别</string>
+    <string name="accessibility_service_description">仅在您点击控制中心「识取件码」磁贴时，在内存截取当前画面并本地离线识别取件码，不读取其他页面、不上传数据、不在相册留存截图。</string>
+</resources>
