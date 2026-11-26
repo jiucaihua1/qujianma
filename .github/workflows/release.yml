@@ -41,11 +41,16 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+
       - name: Build release APK
         run: |
           set -o pipefail
           flutter build apk --release 2>&1 | tee build_apk.log || {
-            echo "::error::$(tail -n 25 build_apk.log | tr '\n' ' ')"
+            ERR=$(grep -A 12 "What went wrong:" build_apk.log | tr '\n' ' ')
+            [ -z "$ERR" ] && ERR=$(tail -n 20 build_apk.log | tr '\n' ' ')
+            echo "::error::$ERR"
             exit 1
           }
 
