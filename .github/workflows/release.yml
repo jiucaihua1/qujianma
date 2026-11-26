@@ -23,9 +23,6 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -45,7 +42,12 @@ jobs:
         run: flutter test
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: |
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee build_apk.log || {
+            echo "::error::$(tail -n 25 build_apk.log | tr '\n' ' ')"
+            exit 1
+          }
 
       - name: Rename APK asset
         run: |
