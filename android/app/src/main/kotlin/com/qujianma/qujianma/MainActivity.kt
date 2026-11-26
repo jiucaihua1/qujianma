@@ -108,6 +108,14 @@ class MainActivity : FlutterActivity() {
                     result.success(version)
                 }
 
+                "scheduleDailyReminder" -> {
+                    val enabled = call.argument<Boolean>("enabled") ?: false
+                    val hour = call.argument<Int>("hour") ?: 18
+                    val minute = call.argument<Int>("minute") ?: 30
+                    DailyReminderScheduler.scheduleNext(applicationContext, enabled, hour, minute)
+                    result.success(true)
+                }
+
                 "getQuickTileStatus" -> {
                     result.success(
                         mapOf(

@@ -10,6 +10,9 @@ class AppSettings {
     this.showStationSuggestionBanner = true,
     this.ruleUpdateUrl = defaultRuleUpdateUrl,
     this.lastRuleSyncAt = '',
+    this.dailyReminderEnabled = false,
+    this.dailyReminderHour = 18,
+    this.dailyReminderMinute = 30,
   });
 
   /// 0 = 首页（身份码页）, 1 = 取件一览页
@@ -29,6 +32,13 @@ class AppSettings {
   /// 最近一次成功同步规则的时间
   final String lastRuleSyncAt;
 
+  /// 是否开启每日定时未取包裹提醒
+  final bool dailyReminderEnabled;
+
+  /// 每日提醒时间（小时 0-23，分钟 0-59）
+  final int dailyReminderHour;
+  final int dailyReminderMinute;
+
   AppSettings copyWith({
     int? defaultTabIndex,
     bool? autoDetectClipboard,
@@ -37,6 +47,9 @@ class AppSettings {
     bool? showStationSuggestionBanner,
     String? ruleUpdateUrl,
     String? lastRuleSyncAt,
+    bool? dailyReminderEnabled,
+    int? dailyReminderHour,
+    int? dailyReminderMinute,
   }) {
     return AppSettings(
       defaultTabIndex: defaultTabIndex ?? this.defaultTabIndex,
@@ -48,6 +61,9 @@ class AppSettings {
           showStationSuggestionBanner ?? this.showStationSuggestionBanner,
       ruleUpdateUrl: ruleUpdateUrl ?? this.ruleUpdateUrl,
       lastRuleSyncAt: lastRuleSyncAt ?? this.lastRuleSyncAt,
+      dailyReminderEnabled: dailyReminderEnabled ?? this.dailyReminderEnabled,
+      dailyReminderHour: dailyReminderHour ?? this.dailyReminderHour,
+      dailyReminderMinute: dailyReminderMinute ?? this.dailyReminderMinute,
     );
   }
 }

@@ -15,6 +15,9 @@ class SettingsService {
   static const _keyShowStationBanner = 'show_station_suggestion_banner';
   static const _keyRuleUpdateUrl = 'rule_update_url';
   static const _keyLastRuleSyncAt = 'last_rule_sync_at';
+  static const _keyDailyReminderEnabled = 'daily_reminder_enabled';
+  static const _keyDailyReminderHour = 'daily_reminder_hour';
+  static const _keyDailyReminderMinute = 'daily_reminder_minute';
   static const _keyShortcuts = 'identity_shortcuts_v3';
   static const _keyStationRules = 'station_rules_v1';
   static const _keyDismissedSuggestions = 'dismissed_station_suggestions_v1';
@@ -34,6 +37,9 @@ class SettingsService {
               ? prefs.getString(_keyRuleUpdateUrl)!
               : AppSettings.defaultRuleUpdateUrl,
       lastRuleSyncAt: prefs.getString(_keyLastRuleSyncAt) ?? '',
+      dailyReminderEnabled: prefs.getBool(_keyDailyReminderEnabled) ?? false,
+      dailyReminderHour: prefs.getInt(_keyDailyReminderHour) ?? 18,
+      dailyReminderMinute: prefs.getInt(_keyDailyReminderMinute) ?? 30,
     );
   }
 
@@ -52,6 +58,12 @@ class SettingsService {
     );
     await prefs.setString(_keyRuleUpdateUrl, settings.ruleUpdateUrl);
     await prefs.setString(_keyLastRuleSyncAt, settings.lastRuleSyncAt);
+    await prefs.setBool(
+      _keyDailyReminderEnabled,
+      settings.dailyReminderEnabled,
+    );
+    await prefs.setInt(_keyDailyReminderHour, settings.dailyReminderHour);
+    await prefs.setInt(_keyDailyReminderMinute, settings.dailyReminderMinute);
   }
 
   Future<ParserRuleBundle> loadParserRuleBundle() async {

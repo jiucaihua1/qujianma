@@ -119,6 +119,23 @@ class PickupDatabaseHelper(context: Context) :
         return InsertResult(inserted = inserted, skippedCount = skipped)
     }
 
+    fun getPendingSummary(): Pair<Int, Int> {
+        val db = readableDatabase
+        var itemCount = 0
+        val stations = mutableSetOf<String>()
+        db.rawQuery(
+            "SELECT station_name FROM $TABLE_NAME WHERE is_picked_up = 0",
+            null
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                itemCount++
+                val raw = cursor.getString(0)?.trim().orEmpty()
+                stations.add(if (raw.isEmpty()) "默认驿站" else raw)
+            }
+        }
+        return itemCount to stations.size
+    }
+
     companion object {
         private const val DB_NAME = "qujianma.db"
         private const val DB_VERSION = 2

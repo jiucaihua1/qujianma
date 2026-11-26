@@ -7,6 +7,7 @@ import '../models/pickup_item.dart';
 import '../models/station_rule.dart';
 import 'database_service.dart';
 import 'pickup_parser.dart';
+import 'quick_tile_service.dart';
 import 'rule_sync_service.dart';
 import 'settings_service.dart';
 
@@ -123,6 +124,11 @@ class AppState extends ChangeNotifier {
       await _db.cleanOldPickedUpItems(_settings.autoCleanDays);
     }
     await reloadItems();
+    await QuickTileService.scheduleDailyReminder(
+      enabled: _settings.dailyReminderEnabled,
+      hour: _settings.dailyReminderHour,
+      minute: _settings.dailyReminderMinute,
+    );
     _initialized = true;
     notifyListeners();
 
@@ -208,9 +214,20 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> updateSettings(AppSettings next) async {
+    final reminderChanged =
+        next.dailyReminderEnabled != _settings.dailyReminderEnabled ||
+            next.dailyReminderHour != _settings.dailyReminderHour ||
+            next.dailyReminderMinute != _settings.dailyReminderMinute;
     _settings = next;
     notifyListeners();
     await _settingsService.saveSettings(next);
+    if (reminderChanged) {
+      await QuickTileService.scheduleDailyReminder(
+        enabled: next.dailyReminderEnabled,
+        hour: next.dailyReminderHour,
+        minute: next.dailyReminderMinute,
+      );
+    }
     if (next.autoCleanDays > 0) {
       await _db.cleanOldPickedUpItems(next.autoCleanDays);
       await reloadItems();

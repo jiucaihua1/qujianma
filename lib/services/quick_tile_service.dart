@@ -176,6 +176,25 @@ class QuickTileService {
     return '0.1.0';
   }
 
+  static Future<void> scheduleDailyReminder({
+    required bool enabled,
+    required int hour,
+    required int minute,
+  }) async {
+    try {
+      await _channel.invokeMethod<void>(
+        'scheduleDailyReminder',
+        {
+          'enabled': enabled,
+          'hour': hour,
+          'minute': minute,
+        },
+      );
+    } catch (_) {
+      // Ignore on non-Android platforms or tests.
+    }
+  }
+
   static Future<bool> checkSmsPermission() async {
     try {
       return (await _channel.invokeMethod<bool>('checkSmsPermission')) == true;

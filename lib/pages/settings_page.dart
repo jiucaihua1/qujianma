@@ -14,10 +14,33 @@ class SettingsPage extends StatelessWidget {
 
   final AppState appState;
 
+  Future<void> _pickReminderTime(BuildContext context) async {
+    final settings = appState.settings;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: settings.dailyReminderHour,
+        minute: settings.dailyReminderMinute,
+      ),
+    );
+    if (picked != null) {
+      await appState.updateSettings(
+        settings.copyWith(
+          dailyReminderEnabled: true,
+          dailyReminderHour: picked.hour,
+          dailyReminderMinute: picked.minute,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = appState.settings;
     final historyCount = appState.historyItems.length;
+    final reminderTimeLabel =
+        '${settings.dailyReminderHour.toString().padLeft(2, '0')}:'
+        '${settings.dailyReminderMinute.toString().padLeft(2, '0')}';
 
     return SafeArea(
       child: ListView(
@@ -34,70 +57,123 @@ class SettingsPage extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           const Text(
-            '个性化启动偏好、跳转链接维护与本地隐私说明',
+            '识别规则、定时取件提醒、快捷工具与数据管理',
             style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 18),
 
-          // Section 0: Quick Settings Tile one-tap screenshot OCR
-          const _SectionLabel('控制中心一键截屏识码'),
-          const SizedBox(height: 8),
-          const _QuickTileGuideCard(),
-
-          const SizedBox(height: 20),
-
-          // Section 1: Launch & Smart Recognition
-          const _SectionLabel('启动与智能识别'),
+          // Section 1: Recognition & Reminders
+          const _SectionLabel('识别与提醒'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                leading: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primarySoft,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.store_mall_directory_rounded,
+                    color: AppTheme.primary,
+                    size: 20,
+                  ),
+                ),
+                title: const Text(
+                  '常用驿站与识别规则',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  appState.stationSuggestions.isNotEmpty
+                      ? '已配置 ${appState.enabledStationRules.length} 个常用驿站 · 有 ${appState.stationSuggestions.length} 条整理建议'
+                      : '已配置 ${appState.enabledStationRules.length} 个常用驿站，支持云端规则热更新',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => StationManagePage(appState: appState),
+                    ),
+                  );
+                },
+              ),
+              const Divider(height: 1, color: AppTheme.cardBorder),
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                leading: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.notifications_active_outlined,
+                    color: Color(0xFFEA580C),
+                    size: 20,
+                  ),
+                ),
+                title: const Text(
+                  '每日未取包裹提醒',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  settings.dailyReminderEnabled
+                      ? '每天 $reminderTimeLabel 提醒（有未取包裹时推送，点击可改时间）'
+                      : '关闭中 · 可定时提醒“今天有X个包裹还没取”',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      '默认启动页',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      '选择打开 App 时优先显示的页面',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: SegmentedButton<int>(
-                        segments: const [
-                          ButtonSegment<int>(
-                            value: 0,
-                            label: Text('身份码页'),
-                            icon: Icon(Icons.qr_code_2_rounded, size: 18),
+                    if (settings.dailyReminderEnabled)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ActionChip(
+                          label: Text(
+                            reminderTimeLabel,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primary,
+                            ),
                           ),
-                          ButtonSegment<int>(
-                            value: 1,
-                            label: Text('取件一览'),
-                            icon: Icon(Icons.inventory_2_outlined, size: 18),
-                          ),
-                        ],
-                        selected: {settings.defaultTabIndex},
-                        onSelectionChanged: (selection) {
-                          appState.updateSettings(
-                            settings.copyWith(defaultTabIndex: selection.first),
-                          );
-                        },
+                          backgroundColor: AppTheme.primarySoft,
+                          side: BorderSide.none,
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => _pickReminderTime(context),
+                        ),
                       ),
+                    Switch.adaptive(
+                      value: settings.dailyReminderEnabled,
+                      onChanged: (v) async {
+                        if (v) {
+                          final status = await QuickTileService.getStatus();
+                          if (!status.notificationEnabled) {
+                            await QuickTileService
+                                .requestNotificationPermission();
+                          }
+                        }
+                        await appState.updateSettings(
+                          settings.copyWith(dailyReminderEnabled: v),
+                        );
+                      },
                     ),
                   ],
                 ),
+                onTap: () => _pickReminderTime(context),
               ),
               const Divider(height: 1, color: AppTheme.cardBorder),
               SwitchListTile.adaptive(
@@ -124,7 +200,7 @@ class SettingsPage extends StatelessWidget {
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 subtitle: const Text(
-                  '主动选图触发本地 OCR，不申请后台监听或无障碍权限',
+                  '主动选图触发本地 OCR，不申请后台监听权限',
                   style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
                 onChanged: (v) {
@@ -133,10 +209,22 @@ class SettingsPage extends StatelessWidget {
                   );
                 },
               ),
-              const Divider(height: 1, color: AppTheme.cardBorder),
-              ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Section 2: Quick Tools & Shortcuts
+          const _SectionLabel('快捷工具与入口'),
+          const SizedBox(height: 8),
+          _SettingsCard(
+            children: [
+              ExpansionTile(
+                tilePadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                childrenPadding: EdgeInsets.zero,
+                shape: const Border(),
+                collapsedShape: const Border(),
                 leading: Container(
                   width: 38,
                   height: 38,
@@ -145,43 +233,25 @@ class SettingsPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
-                    Icons.store_mall_directory_rounded,
+                    Icons.screenshot_rounded,
                     color: AppTheme.primary,
                     size: 20,
                   ),
                 ),
                 title: const Text(
-                  '常用驿站与识别规则',
+                  '控制中心一键截屏识码',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
-                subtitle: Text(
-                  appState.stationSuggestions.isNotEmpty
-                      ? '已配置 ${appState.enabledStationRules.length} 个常用驿站 · 有 ${appState.stationSuggestions.length} 条整理建议'
-                      : '已配置 ${appState.enabledStationRules.length} 个常用驿站，支持别名优先归类',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondary,
-                  ),
+                subtitle: const Text(
+                  '展开查看无障碍、通知权限与 Shizuku 保活配置',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => StationManagePage(appState: appState),
-                    ),
-                  );
-                },
+                children: const [
+                  Divider(height: 1, color: AppTheme.cardBorder),
+                  _QuickTileGuideCard(),
+                ],
               ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // Section 2: Identity code button management
-          const _SectionLabel('身份码按钮管理'),
-          const SizedBox(height: 8),
-          _SettingsCard(
-            children: [
+              const Divider(height: 1, color: AppTheme.cardBorder),
               ListTile(
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -199,11 +269,11 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ),
                 title: const Text(
-                  '排序、显隐与跳转链接配置',
+                  '身份码按钮管理',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text(
-                  '当前已开启 ${appState.visibleShortcuts.length}/${appState.shortcuts.length} 个快捷入口，可自定义 URL Scheme',
+                  '已开启 ${appState.visibleShortcuts.length}/${appState.shortcuts.length} 个快捷入口，可自定义 URL Scheme',
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppTheme.textSecondary,
@@ -223,11 +293,40 @@ class SettingsPage extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // Section 3: Data & Privacy
-          const _SectionLabel('数据与隐私'),
+          // Section 3: General & Data
+          const _SectionLabel('常规与数据'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                title: const Text(
+                  '默认启动页',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text(
+                  '打开 App 时优先显示的页面',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                trailing: DropdownButton<int>(
+                  value: settings.defaultTabIndex,
+                  underline: const SizedBox.shrink(),
+                  borderRadius: BorderRadius.circular(12),
+                  items: const [
+                    DropdownMenuItem(value: 0, child: Text('身份码页')),
+                    DropdownMenuItem(value: 1, child: Text('取件一览')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) {
+                      appState.updateSettings(
+                        settings.copyWith(defaultTabIndex: v),
+                      );
+                    }
+                  },
+                ),
+              ),
+              const Divider(height: 1, color: AppTheme.cardBorder),
               ListTile(
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -294,50 +393,54 @@ class SettingsPage extends StatelessWidget {
                   },
                 ),
               ),
-              const Divider(height: 1, color: AppTheme.cardBorder),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Section 4: About & Privacy
+          const _SectionLabel('关于与隐私'),
+          const SizedBox(height: 8),
+          _SettingsCard(
+            children: [
               const _CheckUpdateTile(),
               const Divider(height: 1, color: AppTheme.cardBorder),
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.shield_outlined,
-                          size: 18,
-                          color: AppTheme.success,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          '本地离线隐私声明',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      '• 个人数据纯本地处理：所有短信解析、OCR 识别与取件码数据均在手机本地处理与存储，绝不上传任何个人隐私数据。\n'
-                      '• 为什么使用网络权限（可选）：仅用于在您配置规则地址后拉取公开的识别规则 JSON 文件（如新增驿站前缀/后缀词库），不会上传任何短信、截图或取件码。\n'
-                      '• 为什么使用无障碍权限（可选）：\n'
-                      '  1. 控件识别零误差：优先读取页面控件文本，比纯截图 OCR 更快更准，避免 0/O、1/I 等误识；\n'
-                      '  2. 免弹窗内存截屏：遇到小程序等自绘页面时，无需反复弹出系统「允许录屏」确认框，也不在相册留存截图；\n'
-                      '  3. 按需触发：仅在您点击控制中心磁贴或主动开启「引导收码胶囊」时读取当前画面，平时不会在后台监听其他应用。\n'
-                      '• 不开无障碍也能用：若您不希望开启无障碍权限，仍可正常使用本地短信识别、剪贴板识别、相册选图 OCR 及身份码一键直达。\n'
-                      '• 其他权限说明：通知权限仅用于反馈磁贴识码结果；读取短信权限（可选）仅在您点击导入时于本地筛选取件短信；Shizuku（可选）仅用于防止系统杀掉无障碍服务；身份码仅通过 URL Scheme 拉起对应 App，不采集账号或 Cookie。',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: AppTheme.textSecondary,
-                        height: 1.55,
-                      ),
-                    ),
-                  ],
+              const ExpansionTile(
+                tilePadding:
+                    EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                childrenPadding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                shape: Border(),
+                collapsedShape: Border(),
+                leading: Icon(
+                  Icons.shield_outlined,
+                  size: 22,
+                  color: AppTheme.success,
                 ),
+                title: Text(
+                  '本地隐私与权限说明',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  '个人数据纯本地处理，点击展开查看详细权限用途',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                children: [
+                  Text(
+                    '• 个人数据纯本地处理：所有短信解析、OCR 识别与取件码数据均在手机本地处理与存储，绝不上传任何个人隐私数据。\n'
+                    '• 为什么使用网络权限（可选）：仅用于在您配置规则地址后拉取公开的识别规则 JSON 文件或检查版本更新，不会上传任何短信、截图或取件码。\n'
+                    '• 为什么使用无障碍权限（可选）：\n'
+                    '  1. 控件识别零误差：优先读取页面控件文本，比纯截图 OCR 更快更准，避免 0/O、1/I 等误识；\n'
+                    '  2. 免弹窗内存截屏：遇到小程序等自绘页面时，无需反复弹出系统「允许录屏」确认框，也不在相册留存截图；\n'
+                    '  3. 按需触发：仅在您点击控制中心磁贴或主动开启「引导收码胶囊」时读取当前画面，平时不会在后台监听其他应用。\n'
+                    '• 不开无障碍也能用：若您不希望开启无障碍权限，仍可正常使用本地短信识别、剪贴板识别、相册选图 OCR 及身份码一键直达。\n'
+                    '• 其他权限说明：通知权限仅用于反馈磁贴识码结果与每日取件提醒；读取短信权限（可选）仅在您点击导入时于本地筛选取件短信；Shizuku（可选）仅用于防止系统杀掉无障碍服务；身份码仅通过 URL Scheme 拉起对应 App，不采集账号或 Cookie。',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: AppTheme.textSecondary,
+                      height: 1.55,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
