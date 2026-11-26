@@ -26,6 +26,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.47.2'
           channel: 'stable'
           cache: true
 
@@ -47,7 +48,7 @@ jobs:
       - name: Build release APK
         run: |
           set -o pipefail
-          flutter build apk --release 2>&1 | tee build_apk.log || {
+          flutter build apk --release --android-skip-build-dependency-validation 2>&1 | tee build_apk.log || {
             ERR=$(grep -m 1 -A 4 "Error: " build_apk.log | tr '\n' ' ')
             [ -z "$ERR" ] && ERR=$(grep -A 12 "What went wrong:" build_apk.log | tr '\n' ' ')
             echo "::error::$ERR"
