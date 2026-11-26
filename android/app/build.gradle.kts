@@ -33,11 +33,25 @@ android {
         aidl = true
     }
 
+    signingConfigs {
+        create("ciRelease") {
+            val ciKeystore = file("ci-signing.keystore")
+            if (ciKeystore.exists()) {
+                storeFile = ciKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (file("ci-signing.keystore").exists()) {
+                signingConfigs.getByName("ciRelease")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

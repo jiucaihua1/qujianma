@@ -1,7 +1,7 @@
 name: qujianma
 description: "快递取件码 & 身份码聚合应用 — 纯本地离线、隐私友好"
 publish_to: 'none'
-version: 0.1.1+2
+version: 0.1.2+3
 
 environment:
   sdk: ^3.13.2
