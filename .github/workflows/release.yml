@@ -48,8 +48,8 @@ jobs:
         run: |
           set -o pipefail
           flutter build apk --release 2>&1 | tee build_apk.log || {
-            ERR=$(grep -A 12 "What went wrong:" build_apk.log | tr '\n' ' ')
-            [ -z "$ERR" ] && ERR=$(tail -n 20 build_apk.log | tr '\n' ' ')
+            ERR=$(grep -m 1 -A 4 "Error: " build_apk.log | tr '\n' ' ')
+            [ -z "$ERR" ] && ERR=$(grep -A 12 "What went wrong:" build_apk.log | tr '\n' ' ')
             echo "::error::$ERR"
             exit 1
           }
