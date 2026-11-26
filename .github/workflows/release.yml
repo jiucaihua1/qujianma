@@ -23,11 +23,20 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
+
+      - name: Tune Gradle memory for CI runner
+        run: |
+          sed -i 's/-Xmx3G/-Xmx2G/g; s/-XX:MaxMetaspaceSize=1G/-XX:MaxMetaspaceSize=768m/g' android/gradle.properties
+          echo "org.gradle.daemon=false" >> android/gradle.properties
+          echo "org.gradle.parallel=false" >> android/gradle.properties
 
       - name: Install dependencies
         run: flutter pub get
